@@ -1,41 +1,7 @@
-import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-
-
-Future<RecordsCount> getRecordsCount() async {
-  final response =
-  await http.get(Uri.parse('http://localhost/matcher/recordsCount'));
-  if (response.statusCode == 200) {
-    return RecordsCount.fromJson(jsonDecode(response.body));
-  } else {
-    throw Exception('Failed to get records count');
-  }
-}
-
-Future<RecordsCount> flushRecords() async {
-  final response =
-  await http.get(Uri.parse('http://localhost/matcher/flushData'));
-  if (response.statusCode == 200) {
-    return RecordsCount.fromJson(jsonDecode(response.body));
-  } else {
-    throw Exception('Failed to delete all records');
-  }
-}
-
-class RecordsCount {
-  final int records;
-
-  const RecordsCount({
-    required this.records,
-  });
-
-  factory RecordsCount.fromJson(Map<String, dynamic> json) {
-    return RecordsCount(records: json['records']);
-  }
-}
+import 'matcher/matcher_records.dart';
 
 void main() => runApp(const MyApp());
 
@@ -63,6 +29,13 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _refreshRecordsCount() {
+    setState(() {
+      futureRecordsCount = getRecordsCount();
+    });
+  }
+
+  void _addExcelRecords() {
+    addExcelData();
     setState(() {
       futureRecordsCount = getRecordsCount();
     });
@@ -100,6 +73,12 @@ class _MyAppState extends State<MyApp> {
             child: const Icon(Icons.refresh),
           ),
           FloatingActionButton(
+            onPressed: _addExcelRecords,
+            tooltip: 'Load HDD Data',
+            backgroundColor: Colors.green,
+            child: const Icon(Icons.table_chart),
+          ),
+          FloatingActionButton(
             onPressed: _flushRecords,
             tooltip: 'Flush Data',
             backgroundColor: Colors.orange,
@@ -130,5 +109,4 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _exit() => exit(0);
-
 }
