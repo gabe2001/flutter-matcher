@@ -8,10 +8,12 @@ void main() => runApp(const MatcherApp());
 class MatcherApp extends StatelessWidget {
   const MatcherApp({super.key});
 
+  static const String _title = 'Matcher App';
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Matcher App',
+      title: _title,
       theme: ThemeData(
         primarySwatch: Colors.green,
         focusColor: Colors.white,
