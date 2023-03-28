@@ -1,8 +1,26 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'matcher/matcher_records.dart';
+import 'matcher/records.dart';
 
-void main() => runApp(const MyApp());
+void main() => runApp(const MatcherApp());
+
+class MatcherApp extends StatelessWidget {
+  const MatcherApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Matcher App',
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+        focusColor: Colors.white,
+      ),
+      debugShowCheckedModeBanner: true,
+      home: const MyApp(),
+    );
+  }
+}
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -12,7 +30,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late Future<RecordsCount> futureRecordsCount;
+  late Future<RecordsCount> _futureRecordsCount;
 
   @override
   void initState() {
@@ -23,85 +41,79 @@ class _MyAppState extends State<MyApp> {
   void _flushRecords() {
     flushRecords();
     setState(() {
-      futureRecordsCount = getRecordsCount();
+      _futureRecordsCount = getRecordsCount();
     });
   }
 
   void _refreshRecordsCount() {
     setState(() {
-      futureRecordsCount = getRecordsCount();
+      _futureRecordsCount = getRecordsCount();
     });
   }
 
   void _addExcelRecords() {
     addExcelData();
     setState(() {
-      futureRecordsCount = getRecordsCount();
+      _futureRecordsCount = getRecordsCount();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Matcher',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Matcher'),
       ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Matcher Records'),
+      body: Center(
+        child: FutureBuilder<RecordsCount>(
+          future: _futureRecordsCount,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Text('Records: ${snapshot.data!.records}');
+            } else if (snapshot.hasError) {
+              return Text('${snapshot.error}');
+            }
+            return const CircularProgressIndicator();
+          },
         ),
-        body: Center(
-          child: FutureBuilder<RecordsCount>(
-            future: futureRecordsCount,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return Text('Records: ${snapshot.data!.records}');
-              } else if (snapshot.hasError) {
-                return Text('${snapshot.error}');
-              }
-              return const CircularProgressIndicator();
-            },
-          ),
+      ),
+      persistentFooterButtons: [
+        FloatingActionButton(
+          onPressed: _refreshRecordsCount,
+          tooltip: 'Refresh Records Count',
+          backgroundColor: Colors.blue,
+          child: const Icon(Icons.refresh),
         ),
-        persistentFooterButtons: [
-          FloatingActionButton(
-            onPressed: _refreshRecordsCount,
-            tooltip: 'Refresh Records Count',
-            backgroundColor: Colors.blue,
-            child: const Icon(Icons.refresh),
-          ),
-          FloatingActionButton(
-            onPressed: _addExcelRecords,
-            tooltip: 'Load HDD Data',
-            backgroundColor: Colors.green,
-            child: const Icon(Icons.table_chart),
-          ),
-          FloatingActionButton(
-            onPressed: _flushRecords,
-            tooltip: 'Flush Data',
-            backgroundColor: Colors.orange,
-            child: const Icon(Icons.delete),
-          ),
-          FloatingActionButton(
-            onPressed: _exit,
-            tooltip: 'Exit',
-            backgroundColor: Colors.red,
-            child: const Icon(Icons.exit_to_app),
-          ),
-        ],
-        bottomNavigationBar: BottomAppBar(
-          child: FutureBuilder<RecordsCount>(
-            future: futureRecordsCount,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return Text('Records: ${snapshot.data!.records}');
-              } else if (snapshot.hasError) {
-                return Text('${snapshot.error}');
-              }
-              return const CircularProgressIndicator();
-            },
-          ),
+        FloatingActionButton(
+          onPressed: _addExcelRecords,
+          tooltip: 'Load HDD Data',
+          backgroundColor: Colors.lightGreen,
+          child: const Icon(Icons.table_chart),
+        ),
+        FloatingActionButton(
+          onPressed: _flushRecords,
+          tooltip: 'Flush Data',
+          backgroundColor: Colors.orange,
+          child: const Icon(Icons.delete),
+        ),
+        FloatingActionButton(
+          onPressed: _exit,
+          tooltip: 'Exit',
+          backgroundColor: Colors.red,
+          child: const Icon(Icons.exit_to_app),
+        ),
+      ],
+      bottomNavigationBar: BottomAppBar(
+        child: FutureBuilder<RecordsCount>(
+          future: _futureRecordsCount,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Text('Records: ${snapshot.data!.records}');
+            } else if (snapshot.hasError) {
+              return Text('${snapshot.error}');
+            }
+            return const CircularProgressIndicator();
+          },
         ),
       ),
     );
