@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'matcher/records.dart';
+import 'matcher/match.dart';
 
 void main() => runApp(const MatcherApp());
 
@@ -33,11 +34,21 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late Future<RecordsCount> _futureRecordsCount;
+  late Future<MatchResult> _matchResult;
+  late TextEditingController _textEditingController;
 
   @override
   void initState() {
     super.initState();
     _refreshRecordsCount();
+    _initMatchResult();
+    _textEditingController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _textEditingController.dispose();
+    super.dispose();
   }
 
   void _flushRecords() {
@@ -60,6 +71,18 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void _initMatchResult() {
+    setState(() {
+      _matchResult = initMatches();
+    });
+  }
+
+  void _getMatches(String input) {
+    setState(() {
+      _matchResult = getMatches(input);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,16 +90,36 @@ class _MyAppState extends State<MyApp> {
         title: const Text('Matcher'),
       ),
       body: Center(
-        child: FutureBuilder<RecordsCount>(
-          future: _futureRecordsCount,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return Text('Records: ${snapshot.data!.records}');
-            } else if (snapshot.hasError) {
-              return Text('${snapshot.error}');
-            }
-            return const CircularProgressIndicator();
-          },
+        child: Column(
+          children: [
+            TextField(
+              controller: _textEditingController,
+              keyboardType: TextInputType.multiline,
+              maxLines: 12,
+              decoration: const InputDecoration(
+                  hintText: 'Query [JSON]',
+                  focusedBorder: OutlineInputBorder(
+                      borderSide:
+                          BorderSide(width: 1, color: Colors.greenAccent))),
+            ),
+            ElevatedButton(
+                onPressed: () {
+                  _getMatches(_textEditingController.text);
+                },
+                child: const Text('Match it now!')),
+            FutureBuilder<MatchResult>(
+              future: _matchResult,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return Text(snapshot.data!.matchResult.toString());
+                } else if (snapshot.hasError) {
+                  return Text('${snapshot.error}');
+                }
+                return const CircularProgressIndicator();
+              },
+
+            )
+          ],
         ),
       ),
       persistentFooterButtons: [
@@ -110,7 +153,7 @@ class _MyAppState extends State<MyApp> {
           future: _futureRecordsCount,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              return Text('Records: ${snapshot.data!.records}');
+              return Text('Records: "${snapshot.data!.records}"');
             } else if (snapshot.hasError) {
               return Text('${snapshot.error}');
             }
